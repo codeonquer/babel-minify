@@ -21,6 +21,8 @@ function getEvalScopes(path) {
   }
 
   path.traverse({
+    // eval();
+    // 方法执行表达式
     CallExpression(evalPath) {
       const callee = evalPath.get("callee");
 
