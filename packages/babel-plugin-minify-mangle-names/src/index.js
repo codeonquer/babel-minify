@@ -68,11 +68,20 @@ module.exports = babel => {
 
     /**
      * Clears traverse cache and recrawls the AST
+     * 
+     * crawl 扒
      *
-     * to recompute the bindings, references, other scope information
+     * scope 作用域
+     * bindings 绑定 
+     * references 引用
+     *
+     * to recompute the bindings（绑定）, references（引用）, other scope information
      * and paths because the other transformations in the same pipeline
      * (other plugins and presets) changes the AST and does NOT update
      * the scope objects
+     * 
+     * 为了防止其他的 transformer 在进行代码转化之后不更新作用域的信息
+     * 所以清除缓存，重新对整个 Program 计算作用域的相关信息
      */
     crawlScope() {
       (traverse.clearCache || traverse.cache.clear)();
@@ -89,6 +98,9 @@ module.exports = babel => {
      *
      * When this is removed, remember to remove fixup's dependency in
      * ScopeTracker
+     * 
+     * 这里的问题应该 babel 修复
+     * 而且混淆代码过程不会和 babel 编译过程在一起做
      */
     fixup() {
       fixupVarScoping(this);
@@ -111,6 +123,7 @@ module.exports = babel => {
 
       /**
        * Same usage as in DCE, whichever runs first
+       * 对 eval() 进行处理
        */
       if (!isEvalScopesMarked(mangler.program)) {
         markEvalScopes(mangler.program);
@@ -133,6 +146,7 @@ module.exports = babel => {
             scopeTracker.addBinding(scope.bindings[name]);
 
             // add all constant violations as references
+            // 这里在计数的时候，就直接统计在定义的作用域上，没有统计到子作用域上，是不是有问题
             scope.bindings[name].constantViolations.forEach(() => {
               scopeTracker.addReference(scope, scope.bindings[name], name);
             });
@@ -147,6 +161,8 @@ module.exports = babel => {
          *
          * Related:
          * - https://github.com/babel/minify/issues/829
+         * 
+         * babel 之后自己修复了这个问题，不用理会了
          */
         BindingIdentifier(path) {
           if (
@@ -202,6 +218,8 @@ module.exports = babel => {
        * These visitors are for collecting the Characters used in the program
        * to measure the frequency and generate variable names for mangling so
        * as to improve the gzip compression - as gzip likes repetition
+       *
+       * 这里的作用通过频率统计来减小压缩体积，混淆不需要这个功能
        */
       if (this.charset.shouldConsider) {
         collectVisitor.Identifier = function Identifer(path) {
@@ -340,6 +358,7 @@ module.exports = babel => {
         const binding = bindings.get(oldName);
 
         if (mangler.canMangle(oldName, binding, scope)) {
+          // 确定下一个名字
           let next;
           do {
             next = mangler.charset.getIdentifier(counter++);
@@ -374,6 +393,7 @@ module.exports = babel => {
 
       bfsTraverse(this.program, {
         Scopable(path) {
+          // 顶层作用域是否进行变量名修改
           if (!path.isProgram() || mangler.topLevel)
             mangler.mangleScope(path.scope);
         }
@@ -532,6 +552,7 @@ module.exports = babel => {
        * Mangler is run as a single pass. It's the same pattern as used in DCE
        */
       Program: {
+        // 在遍历退出的时候，对整个代码进行命名替换
         exit(path) {
           // If the source code is small then we're going to assume that the user
           // is running on this on single files before bundling. Therefore we

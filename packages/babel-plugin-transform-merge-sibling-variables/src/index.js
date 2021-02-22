@@ -49,16 +49,19 @@ module.exports = function({ types: t }) {
         enter: [
           // concat variables of the same kind with their siblings
           function(path) {
+            // 判断路径是否有同级节点
             if (!path.inList) {
               return;
             }
 
             const { node } = path;
 
+            // 获得同级路径
             let sibling = path.getSibling(path.key + 1);
 
             let declarations = [];
 
+            // 合并相同定义类型的变量
             while (sibling.isVariableDeclaration({ kind: node.kind })) {
               declarations = declarations.concat(sibling.node.declarations);
 

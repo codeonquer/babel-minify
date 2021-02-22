@@ -1,4 +1,9 @@
 // Set that counts
+
+/**
+ * 使用 Map 实现一个可以计数的 Set
+ */
+
 module.exports = class CountedSet {
   constructor() {
     // because you can't simply extend Builtins yet

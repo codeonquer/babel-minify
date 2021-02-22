@@ -8,10 +8,13 @@ module.exports = class Charset {
   constructor(shouldConsider) {
     this.shouldConsider = shouldConsider;
     this.chars = CHARSET.slice();
+
+    // 对使用频率进行统计
     this.frequency = {};
     this.chars.forEach(c => {
       this.frequency[c] = 0;
     });
+
     this.finalized = false;
   }
 

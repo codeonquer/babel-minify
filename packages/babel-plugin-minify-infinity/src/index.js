@@ -16,14 +16,17 @@ module.exports = function({ types: t }) {
         }
 
         // It's a referenced identifier
+        // 作为引用被使用
         if (path.scope.getBinding("Infinity")) {
           return;
         }
 
+        // 作为对象属性被定义
         if (path.parentPath.isObjectProperty({ key: path.node })) {
           return;
         }
 
+        // 作为对象属性被使用
         if (path.parentPath.isMemberExpression()) {
           return;
         }

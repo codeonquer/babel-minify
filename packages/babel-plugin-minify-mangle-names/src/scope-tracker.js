@@ -1,5 +1,9 @@
 "use strict";
 
+/**
+ * 作用域统计
+ */
+
 const CountedSet = require("./counted-set");
 const isLabelIdentifier = require("./is-label-identifier");
 
@@ -12,8 +16,33 @@ const newIssueUrl = "https://github.com/babel/minify/issues/new";
  */
 module.exports = class ScopeTracker {
   constructor() {
-    this.references = new Map();
-    this.bindings = new Map();
+    /**
+     * 特定作用域下的引用，用于计数
+     * babel 默认的引用统计只在顶层作用域 Program.scope.references，并且没有计数
+     * 子作用域的 references 为空
+     * 这里为所有作用域补足 references
+     * binding 中的 references 也不好用
+     *
+     * 计数功能主要用于压缩，混淆不需要
+     *
+     * {
+     *   [scope]: {
+     *     [binding.identifier.name]: count
+     *   }
+     * }
+     */
+    this.references = new Map(); // 引用
+
+    /**
+     * 特定作用域下的绑定
+     *
+     * {
+     *   [scope]: {
+     *     [binding.identifier.name]: [binding]
+     *   }
+     * }
+     */
+    this.bindings = new Map(); // 绑定
   }
 
   /**
@@ -30,6 +59,10 @@ module.exports = class ScopeTracker {
   }
 
   /**
+   * 增加引用所跨越的所有作用域都增加计数统计
+   *
+   * 跨越 between and including
+   *
    * Add reference to all Scopes between and including the ReferencedScope
    * and Binding's Scope
    * @param {Scope} scope
